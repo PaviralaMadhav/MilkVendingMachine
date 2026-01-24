@@ -3,8 +3,8 @@ const Razorpay = require("razorpay");
 const app = express();
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
+  key_id: process.env.rzp_test_S7lwWBgRLyAgDJ,
+  key_secret: process.env.w7VSaK5Vx9AaIBm9dCAy1hGz
 });
 
 app.get("/create_payment", async (req, res) => {
@@ -16,7 +16,7 @@ app.get("/create_payment", async (req, res) => {
   });
 
   // Razorpay hosted payment link
-  const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.RAZORPAY_KEY_ID}&order_id=${order.id}`;
+  const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.rzp_test_S7lwWBgRLyAgDJ}&order_id=${order.id}`;
 
   res.send(paymentLink);
 });
