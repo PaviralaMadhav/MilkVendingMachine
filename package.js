@@ -1,0 +1,8 @@
+{
+  "name": "milk-vending-server",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "razorpay": "^2.9.2"
+  }
+}
