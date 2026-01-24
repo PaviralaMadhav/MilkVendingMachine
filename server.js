@@ -1,0 +1,24 @@
+const express = require("express");
+const Razorpay = require("razorpay");
+const app = express();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+app.get("/create_payment", async (req, res) => {
+  const amount = parseInt(req.query.amount);
+
+  const order = await razorpay.orders.create({
+    amount: amount * 100,
+    currency: "INR"
+  });
+
+  // Razorpay hosted payment link
+  const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.RAZORPAY_KEY_ID}&order_id=${order.id}`;
+
+  res.send(paymentLink);
+});
+
+app.listen(process.env.PORT || 3000);
