@@ -7,18 +7,31 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-app.get("/create_payment", async (req, res) => {
-  const amount = parseInt(req.query.amount);
-
-  const order = await razorpay.orders.create({
-    amount: amount * 100,
-    currency: "INR"
-  });
-
-  // Razorpay hosted payment link
-  const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.rzp_test_S7lwWBgRLyAgDJ}&order_id=${order.id}`;
-
-  res.send(paymentLink);
+// Health check / home route
+app.get("/", (req, res) => {
+  res.send("Milk Vending Backend is Live 🚀");
 });
 
-app.listen(process.env.PORT || 3000);
+// Create payment
+app.get("/create_payment", async (req, res) => {
+  try {
+    const amount = parseInt(req.query.amount);
+
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+    });
+
+    const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.RAZORPAY_KEY_ID}&order_id=${order.id}`;
+
+    res.send(paymentLink);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating payment");
+  }
+});
+
+// Start server (ONLY ONCE)
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running");
+});
