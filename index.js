@@ -3,8 +3,8 @@ const Razorpay = require("razorpay");
 const app = express();
 
 const razorpay = new Razorpay({
-  key_id: process.env.rzp_test_S7lwWBgRLyAgDJ,
-  key_secret: process.env.w7VSaK5Vx9AaIBm9dCAy1hGz
+  RAZORPAY_KEY_ID: process.env.rzp_test_S7lwWBgRLyAgDJ,
+  RAZORPAY_KEY_SECRET: process.env.w7VSaK5Vx9AaIBm9dCAy1hGz
 });
 
 app.get("/create_payment", async (req, res) => {
