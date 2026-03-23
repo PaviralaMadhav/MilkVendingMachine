@@ -50,16 +50,21 @@ app.post("/webhook", (req, res) => {
   const event = req.body;
 
   console.log("Webhook received:", event.event);
+  console.log("FULL DATA:", JSON.stringify(event, null, 2));
 
-  if (event.event === "payment.captured") {
-    const order_id = event.payload.payment.entity.order_id;
+  let order_id = "";
 
-    if (orders[order_id]) {
-      orders[order_id] = "SUCCESS";
-      console.log("Payment SUCCESS:", order_id);
-    } else {
-      console.log("Order not found:", order_id);
-    }
+  if (event.payload.payment_link) {
+    order_id = event.payload.payment_link.entity.id;
+  }
+
+  console.log("Order ID:", order_id);
+
+  if (orders[order_id]) {
+    orders[order_id] = "SUCCESS";
+    console.log("Payment SUCCESS:", order_id);
+  } else {
+    console.log("Order not found!");
   }
 
   res.status(200).send("OK");
