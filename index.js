@@ -29,33 +29,19 @@ app.get("/create-order", async (req, res) => {
     const paymentLink = await razorpay.paymentLink.create({
       amount: amount * 100,
       currency: "INR",
-      description: "Milk Payment",
-
-      customer: {
-        name: "Milk User",
-        email: "test@test.com",
-        contact: "9999999999",
-      },
-
-      notify: {
-        sms: true,
-        email: false,
-      },
-
-      reminder_enable: true,
+      description: "Milk Payment"
     });
 
-    // Save status
     orders[paymentLink.id] = "PENDING";
 
     res.json({
       order_id: paymentLink.id,
-      qr_link: paymentLink.short_url   // 🔥 THIS IS REAL LINK
+      qr_link: paymentLink.short_url
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating payment");
+    console.error("Razorpay Error:", err);
+    res.status(500).send(err.message);
   }
 });
 
