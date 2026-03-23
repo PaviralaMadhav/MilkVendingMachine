@@ -11,32 +11,45 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Store orders (simple memory DB)
+// Simple memory storage (for testing)
 let orders = {};
 
-// Home route
+// ---------------- HOME ----------------
 app.get("/", (req, res) => {
   res.send("Milk Vending Backend is Live 🚀");
 });
 
 
-// 🔥 CREATE ORDER (IMPORTANT CHANGE)
+// ---------------- CREATE PAYMENT LINK ----------------
 app.get("/create-order", async (req, res) => {
   try {
     const amount = parseInt(req.query.amount);
 
-    const order = await razorpay.orders.create({
+    const paymentLink = await razorpay.paymentLink.create({
       amount: amount * 100,
       currency: "INR",
+      description: "Milk Payment",
+
+      customer: {
+        name: "Milk User",
+        email: "test@test.com",
+        contact: "9999999999",
+      },
+
+      notify: {
+        sms: true,
+        email: false,
+      },
+
+      reminder_enable: true,
     });
 
-    // Save order status
-    orders[order.id] = "PENDING";
+    // Save status
+    orders[paymentLink.id] = "PENDING";
 
-  const paymentLink = `https://rzp.io/i/${order.id}`;
     res.json({
-      order_id: order.id,
-      qr_link: paymentLink,
+      order_id: paymentLink.id,
+      qr_link: paymentLink.short_url, // ✅ IMPORTANT
     });
 
   } catch (err) {
@@ -46,24 +59,40 @@ app.get("/create-order", async (req, res) => {
 });
 
 
-// 🔥 WEBHOOK (VERY IMPORTANT)
+// ---------------- WEBHOOK ----------------
 app.post("/webhook", (req, res) => {
   const event = req.body;
 
-  if (event.event === "payment.captured") {
-    const order_id = event.payload.payment.entity.order_id;
+  try {
+    // Payment success event
+    if (event.event === "payment.captured") {
 
-    if (orders[order_id]) {
-      orders[order_id] = "SUCCESS";
-      console.log("Payment SUCCESS:", order_id);
+      let order_id = "";
+
+      // For payment links
+      if (event.payload.payment_link) {
+        order_id = event.payload.payment_link.entity.id;
+      }
+      // fallback
+      else if (event.payload.payment.entity.order_id) {
+        order_id = event.payload.payment.entity.order_id;
+      }
+
+      if (orders[order_id]) {
+        orders[order_id] = "SUCCESS";
+        console.log("Payment SUCCESS:", order_id);
+      }
     }
+
+  } catch (err) {
+    console.error("Webhook Error:", err);
   }
 
   res.status(200).send("OK");
 });
 
 
-// 🔥 CHECK STATUS API (ESP32 uses this)
+// ---------------- CHECK STATUS ----------------
 app.get("/check-status", (req, res) => {
   const order_id = req.query.order_id;
 
@@ -75,7 +104,7 @@ app.get("/check-status", (req, res) => {
 });
 
 
-// Start server
+// ---------------- START SERVER ----------------
 app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running");
+  console.log("Server running 🚀");
 });
