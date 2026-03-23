@@ -32,19 +32,16 @@ app.get("/create-order", async (req, res) => {
       description: "Milk Payment"
     });
 
-    orders[paymentLink.id] = "PENDING";
-
     res.json({
-      order_id: paymentLink.id,
+      order_id: paymentLink.id,        // plink_xxx
       qr_link: paymentLink.short_url
     });
 
   } catch (err) {
-    console.error("Razorpay Error:", err);
+    console.error(err);
     res.status(500).send(err.message);
   }
 });
-
 // ---------------- WEBHOOK ----------------
 app.post("/webhook", (req, res) => {
   const event = req.body;
@@ -76,11 +73,9 @@ app.get("/check-status", async (req, res) => {
   const order_id = req.query.order_id;
 
   try {
-    const payments = await razorpay.orders.fetchPayments(order_id);
+    const link = await razorpay.paymentLink.fetch(order_id);
 
-    const paid = payments.items.find(p => p.status === "captured");
-
-    if (paid) {
+    if (link.status === "paid") {
       return res.json({ status: "SUCCESS" });
     } else {
       return res.json({ status: "PENDING" });
