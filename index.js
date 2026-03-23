@@ -6,50 +6,40 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Razorpay setup
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Simple memory storage (for testing)
+// Store orders (temporary memory)
 let orders = {};
 
-// ---------------- HOME ----------------
+// ---------------- HOME ROUTE ----------------
 app.get("/", (req, res) => {
   res.send("Milk Vending Backend is Live 🚀");
 });
 
 
-// ---------------- CREATE PAYMENT LINK ----------------
+// ---------------- CREATE ORDER ----------------
 app.get("/create-order", async (req, res) => {
   try {
     const amount = parseInt(req.query.amount);
 
-    const paymentLink = await razorpay.paymentLink.create({
+    const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
-      description: "Milk Payment",
-
-      customer: {
-        name: "Milk User",
-        email: "test@test.com",
-        contact: "9999999999",
-      },
-
-      notify: {
-        sms: true,
-        email: false,
-      },
-
-      reminder_enable: true,
     });
 
-    // Save status
-    orders[paymentLink.id] = "PENDING";
+    // Save order status
+    orders[order.id] = "PENDING";
+
+    // ⚠️ FIXED (added backticks)
+    const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.RAZORPAY_KEY_ID}&order_id=${order.id}`;
 
     res.json({
-      order_id: paymentLink.id,
-      qr_link: paymentLink.short_url, // ✅ IMPORTANT
+      order_id: order.id,
+      qr_link: paymentLink,
     });
 
   } catch (err) {
@@ -63,29 +53,17 @@ app.get("/create-order", async (req, res) => {
 app.post("/webhook", (req, res) => {
   const event = req.body;
 
-  try {
-    // Payment success event
-    if (event.event === "payment.captured") {
+  console.log("Webhook received:", event.event);
 
-      let order_id = "";
+  if (event.event === "payment.captured") {
+    const order_id = event.payload.payment.entity.order_id;
 
-      // For payment links
-      if (event.payload.payment_link) {
-        order_id = event.payload.payment_link.entity.id;
-      }
-      // fallback
-      else if (event.payload.payment.entity.order_id) {
-        order_id = event.payload.payment.entity.order_id;
-      }
-
-      if (orders[order_id]) {
-        orders[order_id] = "SUCCESS";
-        console.log("Payment SUCCESS:", order_id);
-      }
+    if (orders[order_id]) {
+      orders[order_id] = "SUCCESS";
+      console.log("Payment SUCCESS:", order_id);
+    } else {
+      console.log("Order not found:", order_id);
     }
-
-  } catch (err) {
-    console.error("Webhook Error:", err);
   }
 
   res.status(200).send("OK");
