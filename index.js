@@ -26,20 +26,31 @@ app.get("/create-order", async (req, res) => {
   try {
     const amount = parseInt(req.query.amount);
 
-    const order = await razorpay.orders.create({
+    const paymentLink = await razorpay.paymentLink.create({
       amount: amount * 100,
       currency: "INR",
+      description: "Milk Payment",
+
+      customer: {
+        name: "Milk User",
+        email: "test@test.com",
+        contact: "9999999999",
+      },
+
+      notify: {
+        sms: true,
+        email: false,
+      },
+
+      reminder_enable: true,
     });
 
-    // Save order status
-    orders[order.id] = "PENDING";
-
-    // ⚠️ FIXED (added backticks)
-    const paymentLink = `https://rzp.io/i/${order.id}`;
+    // Save status
+    orders[paymentLink.id] = "PENDING";
 
     res.json({
-      order_id: order.id,
-      qr_link: paymentLink,
+      order_id: paymentLink.id,
+      qr_link: paymentLink.short_url   // 🔥 THIS IS REAL LINK
     });
 
   } catch (err) {
@@ -47,7 +58,6 @@ app.get("/create-order", async (req, res) => {
     res.status(500).send("Error creating payment");
   }
 });
-
 
 // ---------------- WEBHOOK ----------------
 app.post("/webhook", (req, res) => {
