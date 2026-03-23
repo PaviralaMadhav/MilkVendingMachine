@@ -33,8 +33,7 @@ app.get("/create-order", async (req, res) => {
     // Save order status
     orders[order.id] = "PENDING";
 
-    const paymentLink = `https://api.razorpay.com/v1/checkout/embedded?key_id=${process.env.RAZORPAY_KEY_ID}&order_id=${order.id}`;
-
+  const paymentLink = `https://rzp.io/i/${order.id}`;
     res.json({
       order_id: order.id,
       qr_link: paymentLink,
