@@ -72,14 +72,24 @@ app.post("/webhook", (req, res) => {
 });
 
 // ---------------- CHECK STATUS ----------------
-app.get("/check-status", (req, res) => {
+app.get("/check-status", async (req, res) => {
   const order_id = req.query.order_id;
 
-  const status = orders[order_id] || "PENDING";
+  try {
+    const payments = await razorpay.orders.fetchPayments(order_id);
 
-  res.json({
-    status: status,
-  });
+    const paid = payments.items.find(p => p.status === "captured");
+
+    if (paid) {
+      return res.json({ status: "SUCCESS" });
+    } else {
+      return res.json({ status: "PENDING" });
+    }
+
+  } catch (err) {
+    console.error(err);
+    res.json({ status: "PENDING" });
+  }
 });
 
 
